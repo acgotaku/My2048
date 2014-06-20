@@ -1,6 +1,3 @@
-/**
- * Created by acgotaku on 14-6-18.
- */
 function showNumberWithAnimation( i , j , randNumber ){
 
     var numberCell = $('#number-cell-' + i + "-" + j );

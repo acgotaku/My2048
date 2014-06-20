@@ -23,11 +23,14 @@ module.exports = function (grunt) {
   } catch (e) {}
 
   grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
+    banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
+      '<%= grunt.template.today("yyyy-mm-dd") %> */\n' ,
     yeoman: yeomanConfig,
     watch: {
-      styles: {
-        files: ['<%= yeoman.app %>/css/{,*/}*.css'],
-        tasks: ['copy:styles', 'autoprefixer']
+      script: {
+        files: ['<%= yeoman.app %>/dist/{support2048.js,showAnimation2048.js,main2048.js}'],
+        tasks: ['concat', 'uglify', 'copy:main']
       },
       livereload: {
         options: {
@@ -35,11 +38,55 @@ module.exports = function (grunt) {
         },
         files: [
           '<%= yeoman.app %>/{,*/}*.html',
-          '.tmp/styles/{,*/}*.css',
-          '{.tmp,<%= yeoman.app %>}/scripts/{,*/}*.js',
-          '<%= yeoman.app %>/images/**/*.{png,jpg,jpeg,gif,webp,svg}'
+          '<%= yeoman.app %>/css/{,*/}*.css',
+          '<%= yeoman.app %>/js/{,*/}*.js'
         ]
       }
+    },
+    concat: {
+      options: {
+        banner: '<%= banner %>',
+        stripBanners: true
+      },
+      dist: {
+        src: ['<%= yeoman.app %>/dist/{support2048.js,showAnimation2048.js,main2048.js}'],
+        dest: '<%= yeoman.app %>/dist/<%= pkg.name %>.js'
+      },
+    },
+    jshint: {
+      gruntfile: {
+        options: {
+          jshintrc: '.jshintrc'
+        },
+        src: 'Gruntfile.js'
+      },
+      dist: {
+        options: {
+          jshintrc: '<%= yeoman.app %>/dist/.jshintrc'
+        },
+        src: ['<%= yeoman.app %>/dist/{support2048.js,showAnimation2048.js,main2048.js}']
+      },
+    },
+    uglify: {
+      options: {
+        banner: '<%= banner %>'
+      },
+      dist: {
+        src: '<%= concat.dist.dest %>',
+        dest: '<%= yeoman.app %>/dist/<%= pkg.name %>.min.js'
+      },
+    },
+    copy: {
+        main: {
+            files: [
+            {
+              expand: true,
+              dot: true,
+              cwd: '<%= yeoman.app %>/dist',
+              src: ['<%= pkg.name %>.min.js','<%= pkg.name %>.js'],
+              dest: '<%= yeoman.app %>/js/'
+            }]
+        },
     },
     connect: {
       options: {
