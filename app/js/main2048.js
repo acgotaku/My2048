@@ -1,158 +1,6 @@
-/*! My2048 - v0.0.0 - 2014-06-20 */
-var support2048 = {
-    getPosTop: function(i, j) {
-        return 20 + i * 120;
-    },
-    getPosLeft: function(i, j) {
-        return 20 + j * 120;
-    },
-    getNumberBackgroundColor: function(number) {
-        switch (number) {
-            case 2:
-                return "#eee4da";
-                break;
-            case 4:
-                return "#ede0c8";
-                break;
-            case 8:
-                return "#f2b179";
-                break;
-            case 16:
-                return "#f59563";
-                break;
-            case 32:
-                return "#f67c5f";
-                break;
-            case 64:
-                return "#f65e3b";
-                break;
-            case 128:
-                return "#edcf72";
-                break;
-            case 256:
-                return "#edcc61";
-                break;
-            case 512:
-                return "#9c0";
-                break;
-            case 1024:
-                return "#33b5e5";
-                break;
-            case 2048:
-                return "#09c";
-                break;
-            case 4096:
-                return "#a6c";
-                break;
-            case 8192:
-                return "#93c";
-                break;
-        }
-
-        return "black";
-
-    },
-    getNumberColor: function(number) {
-        if (number <= 4)
-            return "#776e65";
-
-        return "white";
-    },
-    nospace: function(board) {
-        for (var i = 0; i < 4; i ++)
-            for (var j = 0; j < 4; j ++)
-                if (board[i][j] == 0)
-                    return false;
-
-        return true;
-
-    },
-    canMoveLeft: function() {
-        for (var i = 0; i < 4; i ++)
-            for (var j = 1; j < 4; j ++)
-                if (board[i][j] != 0)
-                    if (board[i][j - 1] == 0 || board[i][j - 1] == board[i][j])
-                        return true;
-
-        return false;
-    },
-    canMoveRight:function(){
-        for (var i = 0; i < 4; i ++)
-            for (var j = 2; j >= 0; j --)
-                if (board[i][j] != 0)
-                    if (board[i][j + 1] == 0 || board[i][j + 1] == board[i][j])
-                        return true;
-
-        return false;
-    },
-    canMoveUp:function(){
-        for (var j = 0; j < 4; j ++)
-            for (var i = 1; i < 4; i++)
-                if (board[i][j] != 0)
-                    if (board[i-1][j] == 0 || board[i-1][j] == board[i][j])
-                        return true;
-
-        return false;
-    },
-    canMoveDown:function(){
-        for (var j = 0; j < 4; j ++)
-            for (var i = 2; i >= 0; i --)
-                if (board[i][j] != 0)
-                    if (board[i+1][j] == 0 || board[i+1][j] == board[i][j])
-                        return true;
-
-        return false;
-    },
-    noBlockHorizontal:function(row,col1,col2,board){
-        for(var i=col1+1;i<col2;i++){
-            if(board[row][i]!=0){
-                return false;
-            }
-        }
-        return true;
-    },
-    noBlockVertical:function(col,row1,row2,board){
-        for(var i=row1+1;i<row2;i++){
-            if(board[i][col]!=0){
-                return false;
-            }
-        }
-        return true;
-    },
-    nomove:function(board){
-        if(this.canMoveDown()||this.canMoveUp()||this.canMoveRight()||this.canMoveLeft()){
-            return false;
-        }
-        return true;
-    }
-};
-
-function showNumberWithAnimation( i , j , randNumber ){
-
-    var numberCell = $('#number-cell-' + i + "-" + j );
-
-    numberCell.css('background-color',support2048.getNumberBackgroundColor( randNumber ) );
-    numberCell.css('color',support2048.getNumberColor( randNumber ) );
-    numberCell.text( randNumber );
-
-    numberCell.animate({
-        width:"100px",
-        height:"100px",
-        top:support2048.getPosTop( i , j ),
-        left:support2048.getPosLeft( i , j )
-    },50);
-}
-function showMoveAnimation( fromx , fromy , tox, toy ){
-
-    var numberCell = $('#number-cell-' + fromx + '-' + fromy );
-    numberCell.animate({
-        top:support2048.getPosTop( tox , toy ),
-        left:support2048.getPosLeft( tox , toy )
-    },200);
-}
-
 var board = new Array();
 var score = 0;
+var hasConflicted = new Array();
 $(function() {
     var My2048 = {
         board: new Array(),
@@ -166,8 +14,10 @@ $(function() {
                 }
             for (var i = 0; i < 4; i++) {
                 board[i] = new Array();
+                hasConflicted[i] = new Array();
                 for (var j = 0; j < 4; j++) {
                     board[i][j] = 0;
+                    hasConflicted[i][j] = false;
                 }
             }
             self.updateBoardView();
@@ -182,9 +32,12 @@ $(function() {
             for (var i = 0; i < 4; i++) {
                 for (var j = 0; j < 4; j++) {
                     board[i][j] = 0;
+                    hasConflicted[i][j] = false;
                 }
             }
-            $(".game-message").removeClass("game-over")
+            $(".game-message").removeClass("game-over");
+            score = 0;
+            this.updateScore();
             this.updateBoardView();
             this.generateOneNumber();
             this.generateOneNumber();
@@ -207,10 +60,10 @@ $(function() {
                         theNumberCell.css('height', '100px');
                         theNumberCell.css('top', support2048.getPosTop(i, j));
                         theNumberCell.css('left', support2048.getPosLeft(i, j));
-                        theNumberCell.css('background-color', support2048.getNumberBackgroundColor(board[i][j]));
-                        theNumberCell.css('color', support2048.getNumberColor(board[i][j]));
+                        theNumberCell.addClass('cell-' + board[i][j]);
                         theNumberCell.text(board[i][j]);
                     }
+                    hasConflicted[i][j] = false;
                 }
         },
         generateOneNumber: function() {
@@ -230,7 +83,17 @@ $(function() {
                     randy = parseInt(Math.floor(Math.random() * 4));
                 }
             }
-
+            if (board[randx][randy] != 0) {
+                for (var i = 0; i < 4; i++) {
+                    for (var j = 0; j < 4; j++) {
+                        if (board[i][j] == 0) {
+                            randx = i;
+                            randy = j;
+                            break;
+                        }
+                    }
+                }
+            }
 
             //随机一个数字
             var randNumber = Math.random() < 0.5 ? 2 : 4;
@@ -247,32 +110,39 @@ $(function() {
                 switch (event.keyCode) {
                     case 37://left
                         if (self.moveLeft()) {
-                            setTimeout(self.generateOneNumber.bind(self),210);
-                            setTimeout(self.isGameOver.bind(self),360);
+                            setTimeout(self.generateOneNumber.bind(self), 210);
+                            setTimeout(self.isGameOver.bind(self), 360);
+                            self.updateScore();
                         }
                         break;
                     case 38://up
                         if (self.moveUp()) {
-                            setTimeout(self.generateOneNumber.bind(self),210);
-                            setTimeout(self.isGameOver.bind(self),360);
+                            setTimeout(self.generateOneNumber.bind(self), 210);
+                            setTimeout(self.isGameOver.bind(self), 360);
+                            self.updateScore();
                         }
                         break;
                     case 39: //right
                         if (self.moveRight()) {
-                            setTimeout(self.generateOneNumber.bind(self),210);
-                            setTimeout(self.isGameOver.bind(self),360);
+                            setTimeout(self.generateOneNumber.bind(self), 210);
+                            setTimeout(self.isGameOver.bind(self), 360);
+                            self.updateScore();
                         }
                         break;
                     case 40: //down
                         if (self.moveDown()) {
-                            setTimeout(self.generateOneNumber.bind(self),210);
-                            setTimeout(self.isGameOver.bind(self),360);
+                            setTimeout(self.generateOneNumber.bind(self), 210);
+                            setTimeout(self.isGameOver.bind(self), 360);
+                            self.updateScore();
                         }
                         break;
                     default:
                         break;
                 }
             });
+        },
+        updateScore: function() {
+            $("#score").text(score);
         },
         moveLeft: function() {
             if (!support2048.canMoveLeft(board)) {
@@ -290,19 +160,20 @@ $(function() {
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board)) {
+                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board) && !hasConflicted[i][k]) {
                                 //move
                                 showMoveAnimation(i, j, i, k);
                                 //add
                                 board[i][k] += board[i][j];
                                 board[i][j] = 0;
-
+                                score += board[i][k];
+                                hasConflicted[i][k] = true;
                                 continue;
                             }
                         }
                     }
                 }
-            setTimeout(this.updateBoardView.bind(this),200);
+            setTimeout(this.updateBoardView.bind(this), 200);
             return true;
         },
         moveRight: function() {
@@ -321,19 +192,20 @@ $(function() {
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board)) {
+                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board) && !hasConflicted[i][k]) {
                                 //move
                                 showMoveAnimation(i, j, i, k);
                                 //add
                                 board[i][k] += board[i][j];
                                 board[i][j] = 0;
-
+                                score += board[i][k];
+                                hasConflicted[i][k] = true;
                                 continue;
                             }
                         }
                     }
                 }
-            setTimeout(this.updateBoardView.bind(this),200);
+            setTimeout(this.updateBoardView.bind(this), 200);
             return true;
         },
         moveUp: function() {
@@ -345,26 +217,27 @@ $(function() {
                 {
                     if (board[i][j] != 0) {
                         for (var k = 0; k < i; k++) {
-                            if( board[k][j] == 0 && support2048.noBlockVertical( j , k , i , board ) ){
+                            if (board[k][j] == 0 && support2048.noBlockVertical(j, k, i, board)) {
                                 //move
                                 showMoveAnimation(i, j, k, j);
                                 board[k][j] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if( board[k][j] == board[i][j] && support2048.noBlockVertical( j , k , i , board ) ){
+                            else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, k, i, board) && !hasConflicted[k][j]) {
                                 //move
                                 showMoveAnimation(i, j, k, j);
                                 //add
-                                board[k][j] *=2;
+                                board[k][j] *= 2;
                                 board[i][j] = 0;
-
+                                score += board[k][j];
+                                hasConflicted[k][j] = true;
                                 continue;
                             }
                         }
                     }
                 }
-            setTimeout(this.updateBoardView.bind(this),200);
+            setTimeout(this.updateBoardView.bind(this), 200);
             return true;
         },
         moveDown: function() {
@@ -376,35 +249,36 @@ $(function() {
                 {
                     if (board[i][j] != 0) {
                         for (var k = 3; k > i; k--) {
-                            if( board[k][j] == 0 && support2048.noBlockVertical( j , k , i , board ) ){
+                            if (board[k][j] == 0 && support2048.noBlockVertical(j, k, i, board)) {
                                 //move
                                 showMoveAnimation(i, j, k, j);
                                 board[k][j] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if( board[k][j] == board[i][j] && support2048.noBlockVertical( j , k , i , board ) ){
+                            else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, k, i, board) && !hasConflicted[k][j]) {
                                 //move
                                 showMoveAnimation(i, j, k, j);
                                 //add
-                                board[k][j] *=2;
+                                board[k][j] *= 2;
                                 board[i][j] = 0;
-
+                                score += board[k][j];
+                                hasConflicted[k][j] = true;
                                 continue;
                             }
                         }
                     }
                 }
-            setTimeout(this.updateBoardView.bind(this),200);
+            setTimeout(this.updateBoardView.bind(this), 200);
             return true;
         },
         isGameOver: function() {
-            if(support2048.nomove(board)){
+            if (support2048.nomove(board)) {
                 this.GameOver();
             }
         },
-        GameOver:function(){
-            if(!$(".game-message").hasClass("game-over")){
+        GameOver: function() {
+            if (!$(".game-message").hasClass("game-over")) {
                 $(".game-message").addClass("game-over");
             }
         }

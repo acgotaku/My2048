@@ -28,10 +28,10 @@ module.exports = function (grunt) {
       '<%= grunt.template.today("yyyy-mm-dd") %> */\n' ,
     yeoman: yeomanConfig,
     watch: {
-      script: {
-        files: ['<%= yeoman.app %>/dist/{support2048.js,showAnimation2048.js,main2048.js}'],
-        tasks: ['concat', 'uglify', 'copy:main']
-      },
+      // script: {
+      //   files: ['<%= yeoman.app %>/dist/{support2048.js,showAnimation2048.js,main2048.js}'],
+      //   tasks: ['concat', 'uglify', 'copy:main']
+      // },
       livereload: {
         options: {
           livereload: LIVERELOAD_PORT
@@ -97,11 +97,14 @@ module.exports = function (grunt) {
       proxies: [
         {
           context: '/api',
-          host: 'localhost',
-          port: 3000,
+          host: 'bgm.tv',
+          port: 80,
           https: false,
-          changeOrigin: false,
-          xforward: false
+          changeOrigin: true,
+          xforward: false,
+          rewrite: {
+              'user/acgotaku' : '/api'
+                }
         }
       ],
       livereload: {
@@ -113,7 +116,6 @@ module.exports = function (grunt) {
                '!\\.html|\\.js|\\.css|\\.swf|\\.jp(e?)g|\\.png|\\.gif|\\.eot|\\.woff|\\.ttf|\\.svg$ /index.html'
               ]),
               lrSnippet,
-              mountFolder(connect, '.tmp'),
               mountFolder(connect, yeomanConfig.app)
             ];
           }
