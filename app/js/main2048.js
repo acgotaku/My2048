@@ -2,16 +2,36 @@ var board = new Array();
 var score = 0;
 var hasConflicted = new Array();
 $(function() {
+    var config = {
+        documentWidth: window.screen.availWidth,
+        gridContainerWidth: 0.92 * window.screen.availWidth,
+        cellSideLength: 0.18 * window.screen.availWidth,
+        cellSpace: 0.04 * window.screen.availWidth,
+        init: function() {
+            config.documentWidth = window.screen.availWidth;
+            if (config.documentWidth > 500) {
+                config.gridContainerWidth = 500;
+                config.cellSpace = 20;
+                config.cellSideLength = 100;
+            } else {
+                config.gridContainerWidth = 0.92 * window.screen.availWidth;
+                config.cellSideLength = 0.18 * window.screen.availWidth;
+                config.cellSpace = 0.04 * window.screen.availWidth;
+            }
+
+        }
+    };
     var My2048 = {
         board: new Array(),
         init: function() {
             var self = this;
-            for (var i = 0; i < 4; i ++)
-                for (var j = 0; j < 4; j++) {
-                    var gridCell = $('#grid-cell-' + i + "-" + j);
-                    gridCell.css('top', support2048.getPosTop(i, j));
-                    gridCell.css('left', support2048.getPosLeft(i, j));
-                }
+            config.init();
+            self.redraw();
+            $(window).resize(function() {
+                config.init();
+                self.redraw();
+                self.updateBoardView();
+            });
             for (var i = 0; i < 4; i++) {
                 board[i] = new Array();
                 hasConflicted[i] = new Array();
@@ -24,6 +44,7 @@ $(function() {
             self.generateOneNumber();
             self.generateOneNumber();
             self.bindKey();
+            self.touch();
             $("#start").click(function() {
                 self.newGame();
             });
@@ -40,7 +61,26 @@ $(function() {
             this.updateScore();
             this.updateBoardView();
             this.generateOneNumber();
-            this.generateOneNumber();
+        },
+        redraw: function() {
+            if (config.documentWidth < 500) {
+                $('#grid-container').css('width', config.gridContainerWidth - 2 * config.cellSpace);
+                $('#grid-container').css('height', config.gridContainerWidth - 2 * config.cellSpace);
+                $('#grid-container').css('padding', config.cellSpace);
+                $('#grid-container').css('border-radius', 0.02 * config.gridContainerWidth);
+                $('.grid-cell').css('width', config.cellSideLength);
+                $('.grid-cell').css('height', config.cellSideLength);
+                $('.grid-cell').css('border-radius', 0.02 * config.cellSideLength);
+            } else {
+                $('#grid-container').removeAttr('style');
+                $('.grid-cell').removeAttr('style');
+            }
+            for (var i = 0; i < 4; i ++)
+                for (var j = 0; j < 4; j++) {
+                    var gridCell = $('#grid-cell-' + i + "-" + j);
+                    gridCell.css('top', support2048.getPosTop(i, j, config.cellSpace, config.cellSideLength));
+                    gridCell.css('left', support2048.getPosLeft(i, j, config.cellSpace, config.cellSideLength));
+                }
         },
         updateBoardView: function() {
             $(".number-cell").remove();
@@ -52,19 +92,20 @@ $(function() {
                     if (board[i][j] == 0) {
                         theNumberCell.css('width', '0px');
                         theNumberCell.css('height', '0px');
-                        theNumberCell.css('top', support2048.getPosTop(i, j) + 50);
-                        theNumberCell.css('left', support2048.getPosLeft(i, j) + 50);
+                        theNumberCell.css('top', support2048.getPosTop(i, j, config.cellSpace, config.cellSideLength) + config.cellSideLength / 2);
+                        theNumberCell.css('left', support2048.getPosLeft(i, j, config.cellSpace, config.cellSideLength) + config.cellSideLength / 2);
                     }
                     else {
-                        theNumberCell.css('width', '100px');
-                        theNumberCell.css('height', '100px');
-                        theNumberCell.css('top', support2048.getPosTop(i, j));
-                        theNumberCell.css('left', support2048.getPosLeft(i, j));
+                        theNumberCell.css('width', config.cellSideLength);
+                        theNumberCell.css('height', config.cellSideLength);
+                        theNumberCell.css('top', support2048.getPosTop(i, j, config.cellSpace, config.cellSideLength));
+                        theNumberCell.css('left', support2048.getPosLeft(i, j, config.cellSpace, config.cellSideLength));
                         theNumberCell.addClass('cell-' + board[i][j]);
                         theNumberCell.text(board[i][j]);
                     }
                     hasConflicted[i][j] = false;
                 }
+            $('.number-cell').css('line-height', config.cellSideLength + 'px');
         },
         generateOneNumber: function() {
             if (support2048.nospace(board))
@@ -100,9 +141,57 @@ $(function() {
 
             //在随机位置显示随机数字
             board[randx][randy] = randNumber;
-            showNumberWithAnimation(randx, randy, randNumber);
+            showNumberWithAnimation(randx, randy, randNumber, config);
 
             return true;
+        },
+        touch: function() {
+            var self=this;
+            var container = document.getElementById("grid-container");
+            var touchStartClientX, touchStartClientY;
+            container.addEventListener("touchstart", function(event) {
+                touchStartClientX = event.touches[0].pageX;
+                touchStartClientY = event.touches[0].pageY;
+                event.preventDefault();
+            });
+            container.addEventListener("touchmove", function(event) {
+                event.preventDefault();
+            });
+            container.addEventListener("touchend", function(event) {
+                var touchEndClientX, touchEndClientY;
+                touchEndClientX = event.changedTouches[0].pageX;
+                touchEndClientY = event.changedTouches[0].pageY;
+                var dx = touchEndClientX - touchStartClientX;
+                var absDx = Math.abs(dx);
+                var dy = touchEndClientY - touchStartClientY;
+                var absDy = Math.abs(dy);
+                if (Math.max(absDx, absDy) > 10) {
+                    console.log("HHH");
+                    if (absDx > absDy) {
+                        if (dx > 0) {//right
+                            if (self.moveRight()) {
+                                self.updateScore();
+                            }
+                        } else {//left
+                            if (self.moveLeft()) {
+                                self.updateScore();
+                            }
+                        }
+                    } else {
+                        if (dy > 0) {//down
+                            if (self.moveDown()) {
+                                self.updateScore();
+                            }
+                        } else {//up
+                            if (self.moveUp()) {
+                                self.updateScore();
+                            }
+                        }
+                    }
+                }
+                event.preventDefault();
+            });
+
         },
         bindKey: function() {
             var self = this;
@@ -110,29 +199,21 @@ $(function() {
                 switch (event.keyCode) {
                     case 37://left
                         if (self.moveLeft()) {
-                            setTimeout(self.generateOneNumber.bind(self), 210);
-                            setTimeout(self.isGameOver.bind(self), 360);
                             self.updateScore();
                         }
                         break;
                     case 38://up
                         if (self.moveUp()) {
-                            setTimeout(self.generateOneNumber.bind(self), 210);
-                            setTimeout(self.isGameOver.bind(self), 360);
                             self.updateScore();
                         }
                         break;
                     case 39: //right
                         if (self.moveRight()) {
-                            setTimeout(self.generateOneNumber.bind(self), 210);
-                            setTimeout(self.isGameOver.bind(self), 360);
                             self.updateScore();
                         }
                         break;
                     case 40: //down
                         if (self.moveDown()) {
-                            setTimeout(self.generateOneNumber.bind(self), 210);
-                            setTimeout(self.isGameOver.bind(self), 360);
                             self.updateScore();
                         }
                         break;
@@ -142,6 +223,9 @@ $(function() {
             });
         },
         updateScore: function() {
+            var self = this;
+            setTimeout(self.generateOneNumber.bind(self), 210);
+            setTimeout(self.isGameOver.bind(self), 360);
             $("#score").text(score);
         },
         moveLeft: function() {
@@ -155,14 +239,14 @@ $(function() {
                         for (var k = 0; k < j; k++) {
                             if (board[i][k] == 0 && support2048.noBlockHorizontal(i, k, j, board)) {
                                 //move
-                                showMoveAnimation(i, j, i, k);
+                                showMoveAnimation(i, j, i, k, config);
                                 board[i][k] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
                             else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board) && !hasConflicted[i][k]) {
                                 //move
-                                showMoveAnimation(i, j, i, k);
+                                showMoveAnimation(i, j, i, k, config);
                                 //add
                                 board[i][k] += board[i][j];
                                 board[i][j] = 0;
@@ -187,14 +271,14 @@ $(function() {
                         for (var k = 3; k > j; k--) {
                             if (board[i][k] == 0 && support2048.noBlockHorizontal(i, k, j, board)) {
                                 //move
-                                showMoveAnimation(i, j, i, k);
+                                showMoveAnimation(i, j, i, k, config);
                                 board[i][k] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
                             else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board) && !hasConflicted[i][k]) {
                                 //move
-                                showMoveAnimation(i, j, i, k);
+                                showMoveAnimation(i, j, i, k, config);
                                 //add
                                 board[i][k] += board[i][j];
                                 board[i][j] = 0;
@@ -219,14 +303,14 @@ $(function() {
                         for (var k = 0; k < i; k++) {
                             if (board[k][j] == 0 && support2048.noBlockVertical(j, k, i, board)) {
                                 //move
-                                showMoveAnimation(i, j, k, j);
+                                showMoveAnimation(i, j, k, j, config);
                                 board[k][j] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
                             else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, k, i, board) && !hasConflicted[k][j]) {
                                 //move
-                                showMoveAnimation(i, j, k, j);
+                                showMoveAnimation(i, j, k, j, config);
                                 //add
                                 board[k][j] *= 2;
                                 board[i][j] = 0;
@@ -251,14 +335,14 @@ $(function() {
                         for (var k = 3; k > i; k--) {
                             if (board[k][j] == 0 && support2048.noBlockVertical(j, k, i, board)) {
                                 //move
-                                showMoveAnimation(i, j, k, j);
+                                showMoveAnimation(i, j, k, j, config);
                                 board[k][j] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
                             else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, k, i, board) && !hasConflicted[k][j]) {
                                 //move
-                                showMoveAnimation(i, j, k, j);
+                                showMoveAnimation(i, j, k, j, config);
                                 //add
                                 board[k][j] *= 2;
                                 board[i][j] = 0;

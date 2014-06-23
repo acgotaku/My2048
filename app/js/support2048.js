@@ -2,11 +2,11 @@
  * Created by acgotaku on 14-6-18.
  */
 var support2048 = {
-    getPosTop: function(i, j) {
-        return 20 + i * 120;
+    getPosTop: function(i, j, cellSpace, cellSideLength) {
+        return cellSpace + i*( cellSpace + cellSideLength );
     },
-    getPosLeft: function(i, j) {
-        return 20 + j * 120;
+    getPosLeft: function(i, j, cellSpace, cellSideLength) {
+        return cellSpace + j*( cellSpace + cellSideLength );
     },
     nospace: function(board) {
         for (var i = 0; i < 4; i ++)
