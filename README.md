@@ -1,4 +1,13 @@
-My2048
+# My2048
 ======
 
-My2048 design for myself
+### 使用方法
+
+```
+$ npm install -g grunt-cli
+$ cd My2048
+$ npm install
+
+# 运行2048
+$ grunt server
+```

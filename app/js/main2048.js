@@ -40,6 +40,9 @@ $(function() {
                     hasConflicted[i][j] = false;
                 }
             }
+            // board[0][0] = 2;
+            // board[0][1] = 4;
+            // board[0][2] = 2;
             self.updateBoardView();
             self.generateOneNumber();
             self.generateOneNumber();
@@ -166,7 +169,6 @@ $(function() {
                 var dy = touchEndClientY - touchStartClientY;
                 var absDy = Math.abs(dy);
                 if (Math.max(absDx, absDy) > 10) {
-                    console.log("HHH");
                     if (absDx > absDy) {
                         if (dx > 0) {//right
                             if (self.moveRight()) {
@@ -276,10 +278,14 @@ $(function() {
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, k, j, board) && !hasConflicted[i][k]) {
+                            else if (board[i][k] == board[i][j] && support2048.noBlockHorizontal(i, j, k, board) && !hasConflicted[i][k]) {
                                 //move
                                 showMoveAnimation(i, j, i, k, config);
                                 //add
+                                console.log(i);
+                                console.log(k);
+                                console.log(j);
+                                console.log(support2048.noBlockHorizontal(i, j, k, board));
                                 board[i][k] += board[i][j];
                                 board[i][j] = 0;
                                 score += board[i][k];
@@ -333,14 +339,14 @@ $(function() {
                 {
                     if (board[i][j] != 0) {
                         for (var k = 3; k > i; k--) {
-                            if (board[k][j] == 0 && support2048.noBlockVertical(j, k, i, board)) {
+                            if (board[k][j] == 0 && support2048.noBlockVertical(j, i, k, board)) {
                                 //move
                                 showMoveAnimation(i, j, k, j, config);
                                 board[k][j] = board[i][j];
                                 board[i][j] = 0;
                                 continue;
                             }
-                            else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, k, i, board) && !hasConflicted[k][j]) {
+                            else if (board[k][j] == board[i][j] && support2048.noBlockVertical(j, i, k, board) && !hasConflicted[k][j]) {
                                 //move
                                 showMoveAnimation(i, j, k, j, config);
                                 //add
