@@ -53,6 +53,36 @@ module.exports = function (grunt) {
         dest: '<%= yeoman.app %>/dist/<%= pkg.name %>.js'
       },
     },
+    cssmin: {
+     dist: {
+         files: {
+             '<%= config.dist %>/styles/main.css': [
+                 '.tmp/styles/{,*/}*.css',
+                 '<%= config.app %>/styles/{,*/}*.css'
+             ]
+         }
+      }
+    },
+   htmlmin: {
+       dist: {
+           options: {
+               collapseBooleanAttributes: true,
+               collapseWhitespace: true,
+               removeAttributeQuotes: true,
+               removeCommentsFromCDATA: true,
+               removeEmptyAttributes: true,
+               removeOptionalTags: true,
+               removeRedundantAttributes: true,
+               useShortDoctype: true
+            },
+           files: [{
+               expand: true,
+               cwd: '<%= config.dist %>',
+               src: '{,*/}*.html',
+               dest: '<%= config.dist %>'
+            }]
+        }
+    },
     jshint: {
       gruntfile: {
         options: {
